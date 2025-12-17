@@ -6,6 +6,9 @@ A comprehensive Discord bot for managing Uma Musume: Pretty Derby club data, fan
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=flat&logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
+[![Discord Server](https://img.shields.io/discord/1015976866856812594?color=5865F2&logo=discord&logoColor=white&label=Join%20our%20Discord)](https://discord.com/invite/touchclub)
+[![Top.gg](https://img.shields.io/badge/Top.gg-Vote-FF3366?logo=discord&logoColor=white)](https://top.gg/bot/1312444816071720980/vote)
+
 ## ✨ Features
 
 ### 📊 Club Management
