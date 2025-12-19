@@ -32,8 +32,35 @@ from io import StringIO
 
 
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file (use absolute path for hosting)
+_SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+_ENV_FILE = os.path.join(_SCRIPT_DIR, '.env')
+
+# DEBUG: Print where we're looking for .env
+print(f"🔍 Looking for .env at: {_ENV_FILE}")
+print(f"   File exists: {os.path.exists(_ENV_FILE)}")
+if os.path.exists(_ENV_FILE):
+    print(f"   File size: {os.path.getsize(_ENV_FILE)} bytes")
+    # DEBUG: Read and show first few lines (hide actual values)
+    try:
+        with open(_ENV_FILE, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        print(f"   Total lines: {len(lines)}")
+        for i, line in enumerate(lines[:5]):  # Show first 5 lines
+            line = line.strip()
+            if '=' in line and not line.startswith('#'):
+                key = line.split('=')[0]
+                print(f"   Line {i+1}: {key}=***")
+            else:
+                print(f"   Line {i+1}: {repr(line)}")
+    except Exception as e:
+        print(f"   Error reading file: {e}")
+
+load_dotenv(_ENV_FILE)
+
+# DEBUG: Check if DISCORD_TOKEN was loaded
+_test_token = os.getenv('DISCORD_BOT_TOKEN')
+print(f"   DISCORD_BOT_TOKEN loaded: {'Yes' if _test_token else 'No'}")
 
 # ============================================================================
 # SMART DATA CACHE WITH DISK PERSISTENCE
@@ -202,21 +229,11 @@ class SmartCache:
 # CONFIGURATION
 # ============================================================================
 
-def parse_int_list(env_var: str, default: list = None) -> list:
-    """Parse comma-separated list of integers from environment variable"""
-    value = os.getenv(env_var, "")
-    if not value:
-        return default or []
-    try:
-        return [int(x.strip()) for x in value.split(",") if x.strip()]
-    except ValueError:
-        return default or []
-
 @dataclass
 class BotConfig:
     """Bot configuration constants"""
     SERVICE_ACCOUNT_FILE: str = 'credentials.json'
-    GOOGLE_SHEET_ID: str = None
+    GOOGLE_SHEET_ID: str = '13-FoOHTQ7hiTN8LyERdbeS6HgO6npt0Ew7MbUAf-4PA'
     CONFIG_SHEET_NAME: str = 'Clubs_Config'
     ADMIN_ROLE_IDS: List[int] = None
     GOD_MODE_USER_IDS: List[int] = None
@@ -226,11 +243,9 @@ class BotConfig:
     RETRY_DELAY: int = 1  # seconds
     
     def __post_init__(self):
-        # Load from environment variables for security
-        self.GOOGLE_SHEET_ID = os.getenv('GOOGLE_SHEET_ID', self.GOOGLE_SHEET_ID)
-        self.ADMIN_ROLE_IDS = parse_int_list('ADMIN_ROLE_IDS') or self.ADMIN_ROLE_IDS or []
-        self.GOD_MODE_USER_IDS = parse_int_list('GOD_MODE_USER_IDS') or self.GOD_MODE_USER_IDS or []
-        self.ALLOWED_CHANNEL_IDS = parse_int_list('ALLOWED_CHANNEL_IDS') or self.ALLOWED_CHANNEL_IDS or []
+        self.ADMIN_ROLE_IDS = self.ADMIN_ROLE_IDS or [ 1412658767060799538, 1398724450282639401, 139872459368615534 ]
+        self.GOD_MODE_USER_IDS = self.GOD_MODE_USER_IDS or [743767851449712690]
+        self.ALLOWED_CHANNEL_IDS = self.ALLOWED_CHANNEL_IDS or [1435935688762855424, 1400042610692849706]
 
 config = BotConfig()
 
@@ -260,12 +275,12 @@ ALLOWED_CHANNELS_CONFIG_FILE = os.path.join(SCRIPT_DIR, "allowed_channels_config
 ADMIN_LIST_FILE = os.path.join(SCRIPT_DIR, "admin_list.json")
 CHANNEL_CHANGE_LOG_FILE = os.path.join(SCRIPT_DIR, "channel_change_log.json")
 
-# Channel IDs - loaded from environment variables for security
-LOGGING_CHANNEL_ID = int(os.getenv('LOGGING_CHANNEL_ID', '0'))
-REQUEST_CHANNEL_ID = int(os.getenv('REQUEST_CHANNEL_ID', '0'))
+# Channel IDs - hardcoded for hosting deployment
+LOGGING_CHANNEL_ID = 1015997100456165488  # Channel to send change history logs
+REQUEST_CHANNEL_ID = 1015993980049174539  # Channel for club data requests
 
 # Channel list display system
-CHANNEL_LIST_DISPLAY_CHANNEL_ID = int(os.getenv('CHANNEL_LIST_DISPLAY_CHANNEL_ID', '0'))
+CHANNEL_LIST_DISPLAY_CHANNEL_ID = 1015983378790621314  # Channel for permanent channel list message
 CHANNEL_LIST_CONFIG_FILE = os.path.join(SCRIPT_DIR, "channel_list_config.json")
 
 # Global leaderboard display system
@@ -275,13 +290,13 @@ GLOBAL_LEADERBOARD_CONFIG_FILE = os.path.join(SCRIPT_DIR, "global_leaderboard_co
 pending_requests = {}
 
 # Support server
-SUPPORT_SERVER_URL = os.getenv('SUPPORT_SERVER_URL', "https://discord.com/invite/touchclub")
+SUPPORT_SERVER_URL = "https://discord.com/invite/touchclub"
 SUPPORT_MESSAGE = "Looking for clubs? Join our discord server"
 SUPPORT_HELP_MESSAGE = "Need help? Join our support server"
 
-# Donation & Vote Prompts - Set these in .env file
-DONATION_URL = os.getenv('DONATION_URL', "")
-VOTE_URL = os.getenv('VOTE_URL', "")
+# Donation & Vote Prompts
+DONATION_URL = "https://ko-fi.com/senchouxflare_7b7m"
+VOTE_URL = "https://top.gg/bot/1312444816071720980/vote"
 PROMO_CHANCE = 0.50  # 50% chance to show promo message
 PROMO_COOLDOWN = 60  # 60 seconds (1 minute) cooldown per user
 DONATION_MESSAGE = "Support us on Ko-fi"
@@ -296,8 +311,8 @@ promo_cooldowns = {}  # {user_id: last_promo_timestamp}
 SCHEDULE_URL = "https://raw.githubusercontent.com/JustWastingTime/TazunaDiscordBot/main/assets/schedule.json"
 SCHEDULE_CACHE_FILE = os.path.join(SCRIPT_DIR, "schedule_cache.json")
 SCHEDULE_CONFIG_FILE = os.path.join(SCRIPT_DIR, "schedule_config.json")
-SCHEDULE_NOTIFY_USER_ID = int(os.getenv('SCHEDULE_NOTIFY_USER_ID', '0'))
-SCHEDULE_DEFAULT_CHANNEL_ID = int(os.getenv('SCHEDULE_DEFAULT_CHANNEL_ID', '0'))
+SCHEDULE_NOTIFY_USER_ID = 743767851449712690  # User to ping on updates
+SCHEDULE_DEFAULT_CHANNEL_ID = 1015983378790621314  # Fallback channel
 schedule_last_etag = None
 schedule_cache = []  # In-memory cache
 
@@ -8155,12 +8170,12 @@ async def on_ready():
 
 if __name__ == "__main__":
     # Load bot token from environment variable (secure method)
-    BOT_TOKEN = os.getenv('DISCORD_TOKEN')
+    BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
     
     if not BOT_TOKEN:
-        print("ERROR: DISCORD_TOKEN environment variable is not set!")
+        print("ERROR: DISCORD_BOT_TOKEN environment variable is not set!")
         print("Please create a .env file with:")
-        print("    DISCORD_TOKEN=your_bot_token_here")
+        print("    DISCORD_BOT_TOKEN=your_bot_token_here")
         print("")
         print("Or set the environment variable directly.")
         sys.exit(1)
